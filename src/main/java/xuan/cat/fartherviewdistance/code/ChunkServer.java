@@ -7,8 +7,6 @@ import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitScheduler;
-import org.bukkit.scheduler.BukkitTask;
 import xuan.cat.fartherviewdistance.api.branch.*;
 import xuan.cat.fartherviewdistance.api.branch.packet.PacketEvent;
 import xuan.cat.fartherviewdistance.api.branch.packet.PacketMapChunkEvent;
@@ -16,6 +14,7 @@ import xuan.cat.fartherviewdistance.api.event.PlayerSendExtendChunkEvent;
 import xuan.cat.fartherviewdistance.code.data.*;
 import xuan.cat.fartherviewdistance.code.data.viewmap.ViewMap;
 import xuan.cat.fartherviewdistance.code.data.viewmap.ViewShape;
+import xuan.cat.fartherviewdistance.code.util.SchedulerUtil;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -32,7 +31,6 @@ public final class ChunkServer {
     private boolean running = true;
     public final BranchMinecraft branchMinecraft;
     public final BranchPacket branchPacket;
-    private final Set<BukkitTask> bukkitTasks = ConcurrentHashMap.newKeySet();
     /** 隨機數產生器 */
     public static final Random random = new Random();
     /** 多執行緒服務 */
@@ -76,13 +74,12 @@ public final class ChunkServer {
         this.branchPacket = branchPacket;
         this.viewShape = viewShape;
 
-        BukkitScheduler scheduler = Bukkit.getScheduler();
-        bukkitTasks.add(scheduler.runTaskTimer(plugin, this::tickSync, 0, 1));
-        bukkitTasks.add(scheduler.runTaskTimerAsynchronously(plugin, this::tickAsync, 0, 1));
-        bukkitTasks.add(scheduler.runTaskTimerAsynchronously(plugin, this::tickReport, 0, 20));
+        SchedulerUtil.runTaskTimer(plugin, this::tickSync, 1, 1);
+        SchedulerUtil.runTaskTimerAsynchronously(plugin, this::tickAsync, 1, 1);
+        SchedulerUtil.runTaskTimerAsynchronously(plugin, this::tickReport, 1, 20);
 
         // 除錯用
-//        scheduler.runTaskTimer(plugin, () -> {
+//        SchedulerUtil.runTaskTimer(plugin, () -> {
 //            Player p = Bukkit.getPlayer("xuancat0208");
 //            if (p != null) {
 //                PlayerChunkView v = getView(p);
@@ -596,8 +593,7 @@ public final class ChunkServer {
      */
     void close() {
         running = false;
-        for (BukkitTask task : bukkitTasks)
-            task.cancel();
+        SchedulerUtil.cancelTasks(plugin);
         multithreadedService.shutdown();
     }
 }

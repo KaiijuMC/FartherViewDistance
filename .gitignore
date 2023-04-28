@@ -1,5 +1,7 @@
 # Project exclude paths
 /target/
+/build/
+/.gradle/
 # 项目排除路径
 /branch_1_14/target/
 /branch_1_15/target/
